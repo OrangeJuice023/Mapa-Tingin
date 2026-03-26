@@ -25,7 +25,6 @@ import PipelineVisualizer, { PipelineStage } from "@/components/PipelineVisualiz
 import TemperatureChart from "@/components/TemperatureChart";
 import LocationMap from "@/components/LocationMap";
 import GlobalAlertBanner from "@/components/GlobalAlertBanner";
-import AdHocAnalysisPanel from "@/components/AdHocAnalysisPanel";
 
 export default function MissionControl() {
   const [activeLocationName, setActiveLocationName] = useState("Quezon City");
@@ -38,8 +37,6 @@ export default function MissionControl() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastSync, setLastSync] = useState<Date>(new Date());
   const [isClient, setIsClient] = useState(false);
-  const [adHocResult, setAdHocResult] = useState<any>(null);
-  const [adHocLoading, setAdHocLoading] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -117,8 +114,9 @@ export default function MissionControl() {
 
   // Ad-hoc location analysis via double-click on map
   const handleMapDoubleClick = useCallback(async (lat: number, lon: number) => {
-    setAdHocLoading(true);
-    setAdHocResult(null);
+    // Show loading in the main dashboard visualizer
+    setPipelineState({ stage: "fetch", status: "running" });
+    
     try {
       // Reverse geocode to get place name
       let placeName = `${lat.toFixed(4)}°N, ${lon.toFixed(4)}°E`;
@@ -133,6 +131,10 @@ export default function MissionControl() {
         // Use coordinate name if reverse geocoding fails
       }
 
+      setPipelineState({ stage: "cleaning", status: "running" });
+      await new Promise(r => setTimeout(r, 400));
+      setPipelineState({ stage: "processing", status: "running" });
+
       // Run pipeline for this ad-hoc location
       const res = await fetch("/api/fetch-data", {
         method: "POST",
@@ -140,13 +142,22 @@ export default function MissionControl() {
         body: JSON.stringify({ lat, lon, name: placeName }),
       });
       const result = await res.json();
-      setAdHocResult(result);
+      
+      setPipelineState({ stage: "alerts", status: "running" });
+      await new Promise(r => setTimeout(r, 400));
+      setPipelineState({ stage: "storage", status: "success" });
+
+      // Dynamically add the new scan to the main dashboard!
+      setLocationsData(prev => [result, ...prev.filter(d => d.location !== placeName)]);
+      setActiveLocationName(placeName);
+      fetchHistory(placeName);
+
+      setTimeout(() => setPipelineState({ stage: "idle", status: "idle" }), 2000);
     } catch (err) {
       console.error("Ad-hoc analysis failed:", err);
-    } finally {
-      setAdHocLoading(false);
+      setPipelineState({ stage: "idle", status: "error" });
     }
-  }, []);
+  }, [fetchHistory]);
 
   const activeData = locationsData.find(d => d.location === activeLocationName) || locationsData[0];
   const highAlertLocations = locationsData
@@ -262,17 +273,6 @@ export default function MissionControl() {
           />
         </div>
       </div>
-
-      {/* Ad-Hoc Scan Results — appears below after double-clicking the map */}
-      {(adHocResult || adHocLoading) && (
-        <div className="w-full max-w-2xl mx-auto">
-          <AdHocAnalysisPanel
-            result={adHocResult}
-            isLoading={adHocLoading}
-            onClose={() => { setAdHocResult(null); setAdHocLoading(false); }}
-          />
-        </div>
-      )}
 
       <footer className="pt-12 pb-6 border-t border-[#1f2937] flex flex-col md:flex-row justify-between items-center text-gray-500 gap-4">
         <div className="flex items-center gap-6 font-mono text-[10px] tracking-widest uppercase">
