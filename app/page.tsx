@@ -25,6 +25,7 @@ import PipelineVisualizer, { PipelineStage } from "@/components/PipelineVisualiz
 import TemperatureChart from "@/components/TemperatureChart";
 import LocationMap from "@/components/LocationMap";
 import GlobalAlertBanner from "@/components/GlobalAlertBanner";
+import AdHocAnalysisPanel from "@/components/AdHocAnalysisPanel";
 
 export default function MissionControl() {
   const [activeLocationName, setActiveLocationName] = useState("Quezon City");
@@ -37,6 +38,8 @@ export default function MissionControl() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastSync, setLastSync] = useState<Date>(new Date());
   const [isClient, setIsClient] = useState(false);
+  const [adHocResult, setAdHocResult] = useState<any>(null);
+  const [adHocLoading, setAdHocLoading] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -114,8 +117,10 @@ export default function MissionControl() {
 
   // Ad-hoc location analysis via double-click on map
   const handleMapDoubleClick = useCallback(async (lat: number, lon: number) => {
-    // Show loading in the main dashboard visualizer
+    // Show loading in the main dashboard visualizer + ad hoc state
     setPipelineState({ stage: "fetch", status: "running" });
+    setAdHocLoading(true);
+    setAdHocResult(null);
     
     try {
       // Reverse geocode to get place name
@@ -147,15 +152,18 @@ export default function MissionControl() {
       await new Promise(r => setTimeout(r, 400));
       setPipelineState({ stage: "storage", status: "success" });
 
-      // Dynamically add the new scan to the main dashboard!
+      // Add the new scan to the main dashboard AND show the specific panel
       setLocationsData(prev => [result, ...prev.filter(d => d.location !== placeName)]);
       setActiveLocationName(placeName);
       fetchHistory(placeName);
+      setAdHocResult(result);
 
       setTimeout(() => setPipelineState({ stage: "idle", status: "idle" }), 2000);
     } catch (err) {
       console.error("Ad-hoc analysis failed:", err);
       setPipelineState({ stage: "idle", status: "error" });
+    } finally {
+      setAdHocLoading(false);
     }
   }, [fetchHistory]);
 
@@ -220,6 +228,17 @@ export default function MissionControl() {
           </div>
         </div>
       </header>
+
+      {/* Specific Scan Status - placed ABOVE the website per request */}
+      {(adHocResult || adHocLoading) && (
+        <div className="w-full bg-[#0a0e1a] pb-6">
+          <AdHocAnalysisPanel
+            result={adHocResult}
+            isLoading={adHocLoading}
+            onClose={() => { setAdHocResult(null); setAdHocLoading(false); }}
+          />
+        </div>
+      )}
 
       {/* Hero Stats Section */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

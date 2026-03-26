@@ -40,7 +40,7 @@ const AdHocAnalysisPanel: React.FC<AdHocAnalysisPanelProps> = ({ result, isLoadi
   };
 
   return (
-    <div className="bg-[#111827] border border-[#1f2937] rounded-xl shadow-xl overflow-hidden h-full flex flex-col">
+    <div className="bg-[#111827] border border-[#1f2937] rounded-xl shadow-xl w-full">
       {/* Header */}
       <div className="bg-gradient-to-r from-cyan-900/40 to-blue-900/40 px-5 py-3 border-b border-[#1f2937] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3">
@@ -64,7 +64,7 @@ const AdHocAnalysisPanel: React.FC<AdHocAnalysisPanelProps> = ({ result, isLoadi
       </div>
 
       {isLoading ? (
-        <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6">
+        <div className="flex flex-col items-center justify-center gap-3 p-8">
           <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
           <p className="text-xs font-bold text-gray-500 uppercase tracking-widest animate-pulse">
             Running pipeline...
@@ -78,7 +78,7 @@ const AdHocAnalysisPanel: React.FC<AdHocAnalysisPanelProps> = ({ result, isLoadi
           </div>
         </div>
       ) : result ? (
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="p-5 space-y-4">
           {/* Risk Level */}
           <div className={`flex items-center justify-between p-3 rounded-lg border ${
             result.riskScore < 30 ? "bg-emerald-500/10 border-emerald-500/30" :
