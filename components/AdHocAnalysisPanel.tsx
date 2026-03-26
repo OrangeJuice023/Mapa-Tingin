@@ -48,13 +48,16 @@ const AdHocAnalysisPanel: React.FC<AdHocAnalysisPanelProps> = ({ result, isLoadi
             <MapPin className="w-4 h-4 text-cyan-500" />
           </div>
           <div>
-            <h3 className="text-sm font-black text-white tracking-tight">
-              {isLoading ? "Scanning..." : "Scan Complete"}
+            <h3 className="text-lg md:text-xl font-black text-white tracking-tight truncate max-w-[300px] md:max-w-[600px] uppercase">
+              {isLoading ? "Scanning Target Sector..." : result?.location || "Scan Complete"}
             </h3>
             {result && (
-              <p className="text-[9px] font-mono text-gray-500 uppercase tracking-widest truncate max-w-[200px]">
-                {result.lat.toFixed(2)}°N, {result.lon.toFixed(2)}°E • {result.location}
-              </p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <p className="text-xs font-mono text-cyan-400/80 uppercase tracking-widest">
+                  Target Coordinates: {result.lat.toFixed(4)}°N, {result.lon.toFixed(4)}°E
+                </p>
+              </div>
             )}
           </div>
         </div>
