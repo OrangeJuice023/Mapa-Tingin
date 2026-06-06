@@ -2,6 +2,9 @@
   "name": "earth-obs-pipeline",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,28 +13,27 @@
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.2.2",
-    "clsx": "latest",
-    "date-fns": "latest",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "leaflet": "^1.9.4",
-    "lucide-react": "latest",
-    "mongoose": "latest",
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "react-leaflet": "^4.2.1",
-    "recharts": "latest",
-    "tailwind-merge": "latest"
+    "lucide-react": "^0.460.0",
+    "mongoose": "^9.3.3",
+    "next": "16.2.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^3.8.1",
+    "tailwind-merge": "^2.5.0"
   },
   "devDependencies": {
     "@types/leaflet": "^1.9.12",
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "autoprefixer": "latest",
-    "eslint": "latest",
-    "eslint-config-next": "latest",
-    "postcss": "latest",
-    "tailwindcss": "latest",
-    "typescript": "latest"
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.1",
+    "postcss": "^8",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5"
   }
 }
