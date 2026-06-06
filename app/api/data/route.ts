@@ -1,29 +1,20 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
-import ProcessedData from "@/models/ProcessedData";
-import { locations } from "@/lib/locations";
+import { runPipeline } from "@/lib/pipeline";
 
-export async function GET(req: Request) {
+export const dynamic = "force-dynamic";
+export const maxDuration = 30;
+
+export async function POST(req: Request) {
   try {
-    await dbConnect();
-    const { searchParams } = new URL(req.url);
-    const location = searchParams.get("location");
+    const { lat, lon, name } = await req.json();
 
-    if (location) {
-      // return last 24 processed records for that location
-      const data = await ProcessedData.find({ location })
-        .sort({ timestamp: -1 })
-        .limit(24);
-      return NextResponse.json(data);
-    } else {
-      // return latest record per location
-      const latestDataPromises = locations.map((loc) => 
-        ProcessedData.findOne({ location: loc.name }).sort({ timestamp: -1 })
-      );
-      const results = await Promise.all(latestDataPromises);
-      return NextResponse.json(results.filter(r => r !== null));
+    if (lat == null || lon == null || !name) {
+      return NextResponse.json({ error: "Missing required fields", stage: "input" }, { status: 400 });
     }
+
+    const result = await runPipeline(lat, lon, name);
+    return NextResponse.json(result);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message, stage: "api" }, { status: 500 });
   }
 }
