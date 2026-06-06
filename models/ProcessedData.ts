@@ -20,4 +20,6 @@ const ProcessedDataSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
 });
 
+ProcessedDataSchema.index({ location: 1, timestamp: -1 });
+
 export default mongoose.models.ProcessedData || mongoose.model("ProcessedData", ProcessedDataSchema);
