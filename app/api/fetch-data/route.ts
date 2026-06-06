@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { runPipeline } from "@/lib/pipeline";
 
+export const dynamic = "force-dynamic";
+export const maxDuration = 30;
+
 export async function POST(req: Request) {
   try {
     const { lat, lon, name } = await req.json();
 
-    if (!lat || !lon || !name) {
+    if (lat == null || lon == null || !name) {
       return NextResponse.json({ error: "Missing required fields", stage: "input" }, { status: 400 });
     }
 
