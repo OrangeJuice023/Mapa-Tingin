@@ -15,80 +15,65 @@ interface LocationOverviewProps {
 }
 
 const LocationOverview: React.FC<LocationOverviewProps> = ({ locations, onSelect, selectedLocation }) => {
-  const getRiskColor = (score: number) => {
-    if (score < 30) return "bg-emerald-500";
-    if (score < 60) return "bg-amber-500";
-    return "bg-rose-500";
-  };
-
-  const getRiskLevel = (score: number) => {
-    if (score < 30) return "LOW";
-    if (score < 60) return "MODERATE";
-    return "HIGH";
-  };
+  const getRiskBar = (s: number) => (s < 30 ? "bg-ok" : s < 60 ? "bg-warn" : "bg-critical");
+  const getRiskPill = (s: number) => (s < 30 ? "bg-ok/10 text-ok" : s < 60 ? "bg-warn/10 text-warn" : "bg-critical/10 text-critical");
+  const getRiskLevel = (s: number) => (s < 30 ? "LOW" : s < 60 ? "MODERATE" : "HIGH");
 
   return (
-    <div className="bg-[#111827] border border-[#1f2937] rounded-xl overflow-hidden shadow-xl">
-      <div className="px-6 py-4 border-b border-[#1f2937]">
-        <h3 className="text-xl font-bold text-white tracking-wide">Location Summary</h3>
+    <div className="overflow-hidden rounded-lg border border-line bg-panel">
+      <div className="border-b border-line px-5 py-4">
+        <h3 className="font-display text-sm font-semibold tracking-wide text-ink">Location Summary</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left">
-          <thead className="bg-[#0f172a] text-xs font-semibold text-gray-500 uppercase tracking-widest">
+          <thead className="bg-elevated text-[11px] font-semibold uppercase tracking-wider text-ink-faint">
             <tr>
-              <th className="px-6 py-3">Location</th>
-              <th className="px-6 py-3">Risk Score</th>
-              <th className="px-6 py-3">Status</th>
-              <th className="px-6 py-3">Alerts</th>
-              <th className="px-6 py-3 text-right">Last Sync</th>
+              <th className="px-5 py-3 font-semibold">Location</th>
+              <th className="px-5 py-3 font-semibold">Risk Score</th>
+              <th className="px-5 py-3 font-semibold">Status</th>
+              <th className="px-5 py-3 font-semibold">Alerts</th>
+              <th className="px-5 py-3 text-right font-semibold">Last Sync</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[#1f2937]">
+          <tbody className="divide-y divide-line">
             {locations.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
+                <td colSpan={5} className="px-5 py-12 text-center text-sm text-ink-muted">
                   <div className="flex flex-col items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
-                    Waiting for pipeline sequence...
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-telemetry" />
+                    Waiting for pipeline sequence…
                   </div>
                 </td>
               </tr>
             ) : (
               locations.map((loc) => (
-                <tr 
-                  key={loc.location} 
+                <tr
+                  key={loc.location}
                   onClick={() => onSelect(loc.location)}
-                  className={`group cursor-pointer hover:bg-[#1e293b]/50 transition-colors ${selectedLocation === loc.location ? "bg-cyan-950/20" : ""}`}
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === "Enter") onSelect(loc.location); }}
+                  className={`cursor-pointer outline-none transition-colors hover:bg-elevated focus-visible:bg-elevated ${selectedLocation === loc.location ? "bg-signal/10" : ""}`}
                 >
-                  <td className="px-6 py-4 font-semibold text-white">
-                    {loc.location}
-                  </td>
-                  <td className="px-6 py-4 w-48">
+                  <td className="px-5 py-4 text-sm font-semibold text-ink">{loc.location}</td>
+                  <td className="w-48 px-5 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full transition-all duration-1000 ${getRiskColor(loc.riskScore)}`}
-                          style={{ width: `${loc.riskScore}%` }}
-                        />
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-elevated">
+                        <div className={`h-full transition-all duration-1000 ${getRiskBar(loc.riskScore)}`} style={{ width: `${Math.min(100, loc.riskScore)}%` }} />
                       </div>
-                      <span className="text-xs font-mono text-gray-400">{Math.round(loc.riskScore)}</span>
+                      <span className="font-mono text-xs tabular-nums text-ink-muted">{Math.round(loc.riskScore)}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded-md text-[10px] font-bold tracking-wider ${
-                      loc.riskScore < 30 ? "bg-emerald-500/10 text-emerald-500" :
-                      loc.riskScore < 60 ? "bg-amber-500/10 text-amber-500" :
-                      "bg-rose-500/10 text-rose-500"
-                    }`}>
+                  <td className="px-5 py-4">
+                    <span className={`rounded-md px-2 py-1 text-[11px] font-semibold tracking-wide ${getRiskPill(loc.riskScore)}`}>
                       {getRiskLevel(loc.riskScore)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`text-sm font-bold ${loc.alerts.length > 0 ? "text-rose-500" : "text-emerald-500"}`}>
+                  <td className="px-5 py-4 text-center">
+                    <span className={`text-sm font-semibold ${loc.alerts.length > 0 ? "text-critical" : "text-ok"}`}>
                       {loc.alerts.length}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right text-gray-500 font-mono text-xs">
+                  <td className="px-5 py-4 text-right font-mono text-xs text-ink-faint">
                     {formatDistanceToNow(new Date(loc.timestamp), { addSuffix: true })}
                   </td>
                 </tr>
