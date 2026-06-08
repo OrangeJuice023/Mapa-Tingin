@@ -12,15 +12,22 @@ export function evaluateAlerts(
 ): Alert[] {
   const alerts: Alert[] = [];
 
-  if (heatIndex > 40) {
+  // Heat index bands (°C), per NWS heat-stress categories
+  if (heatIndex >= 41) {
     alerts.push({
       type: "heat_index",
       level: "HIGH",
-      message: "Extreme heat index detected. Health risk.",
+      message: "Dangerous heat index — heat stroke likely with prolonged exposure.",
+    });
+  } else if (heatIndex >= 32) {
+    alerts.push({
+      type: "heat_index",
+      level: "MEDIUM",
+      message: "Elevated heat index — heat exhaustion possible during activity.",
     });
   }
 
-  if (cloudCover > 80) {
+  if (cloudCover > 85) {
     alerts.push({
       type: "cloud_cover",
       level: "MEDIUM",
@@ -32,7 +39,7 @@ export function evaluateAlerts(
     alerts.push({
       type: "humidity",
       level: "LOW",
-      message: "High humidity levels detected.",
+      message: "High humidity reduces evaporative cooling.",
     });
   }
 
