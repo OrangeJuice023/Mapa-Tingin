@@ -118,13 +118,11 @@ export default function MissionControl() {
   // Ad-hoc location analysis via double-click on map
   const handleMapDoubleClick = useCallback(
     async (lat: number, lon: number) => {
-      // Show loading in the main dashboard visualizer + ad hoc state
       setPipelineState({ stage: "fetch", status: "running" });
       setAdHocLoading(true);
       setAdHocResult(null);
 
       try {
-        // Reverse geocode to get place name
         let placeName = `${lat.toFixed(4)}°N, ${lon.toFixed(4)}°E`;
         try {
           const geoRes = await fetch(
@@ -136,14 +134,13 @@ export default function MissionControl() {
             placeName = parts.slice(0, 2).join(",").trim();
           }
         } catch {
-          // Use coordinate name if reverse geocoding fails
+          // fall back to coordinate name
         }
 
         setPipelineState({ stage: "cleaning", status: "running" });
         await new Promise((r) => setTimeout(r, 400));
         setPipelineState({ stage: "processing", status: "running" });
 
-        // Run pipeline for this ad-hoc location
         const res = await fetch("/api/fetch-data", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -155,7 +152,6 @@ export default function MissionControl() {
         await new Promise((r) => setTimeout(r, 400));
         setPipelineState({ stage: "storage", status: "success" });
 
-        // Add the new scan to the main dashboard AND show the specific panel
         setLocationsData((prev) => [result, ...prev.filter((d) => d.location !== placeName)]);
         setActiveLocationName(placeName);
         fetchHistory(placeName);
@@ -176,6 +172,18 @@ export default function MissionControl() {
   const highAlertLocations = locationsData
     .filter((d) => d.alerts.some((a: any) => a.level === "HIGH"))
     .map((d) => d.location);
+
+  // Real trend: compare the two most recent readings for the active location.
+  // historyData is sorted newest-first, so [0] is latest and [1] is previous.
+  const trendFor = (key: "temp" | "humidity" | "cloud" | "heatIndex"): "up" | "down" | "none" => {
+    if (historyData.length < 2) return "none";
+    const latest = historyData[0]?.[key];
+    const prev = historyData[1]?.[key];
+    if (typeof latest !== "number" || typeof prev !== "number") return "none";
+    if (latest > prev) return "up";
+    if (latest < prev) return "down";
+    return "none";
+  };
 
   if (!isClient) return null;
 
@@ -257,10 +265,10 @@ export default function MissionControl() {
 
       {/* Hero Stats */}
       <section className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Ambient Temperature" value={activeData?.temp ?? "--"} unit="°C" icon={Thermometer} trend="up" />
-        <MetricCard label="Atmospheric Humidity" value={activeData?.humidity ?? "--"} unit="%" icon={Wind} trend="none" />
-        <MetricCard label="Satellite Cloud Index" value={activeData?.cloud ?? "--"} unit="%" icon={Cloud} trend="down" />
-        <MetricCard label="Computed Heat Intensity" value={activeData?.heatIndex ?? "--"} unit="°C" icon={Tornado} trend="up" />
+        <MetricCard label="Ambient Temperature" value={activeData?.temp ?? "--"} unit="°C" icon={Thermometer} trend={trendFor("temp")} />
+        <MetricCard label="Atmospheric Humidity" value={activeData?.humidity ?? "--"} unit="%" icon={Wind} trend={trendFor("humidity")} />
+        <MetricCard label="Satellite Cloud Index" value={activeData?.cloud ?? "--"} unit="%" icon={Cloud} trend={trendFor("cloud")} />
+        <MetricCard label="Computed Heat Intensity" value={activeData?.heatIndex ?? "--"} unit="°C" icon={Tornado} trend={trendFor("heatIndex")} />
       </section>
 
       {/* Main Analysis Grid */}
