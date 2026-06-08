@@ -18,59 +18,54 @@ const AlertPanel: React.FC<AlertPanelProps> = ({ alerts }) => {
   const getAlertStyles = (level: string) => {
     switch (level) {
       case "HIGH":
-        return { bg: "bg-rose-500/10", border: "border-rose-500/50", text: "text-rose-500", icon: ShieldAlert };
+        return { bg: "bg-critical/10", border: "border-critical/40", text: "text-critical", icon: ShieldAlert };
       case "MEDIUM":
-        return { bg: "bg-amber-500/10", border: "border-amber-500/50", text: "text-amber-500", icon: AlertTriangle };
+        return { bg: "bg-warn/10", border: "border-warn/40", text: "text-warn", icon: AlertTriangle };
       case "LOW":
-        return { bg: "bg-cyan-500/10", border: "border-cyan-500/50", text: "text-cyan-500", icon: Info };
+        return { bg: "bg-telemetry/10", border: "border-telemetry/40", text: "text-telemetry", icon: Info };
       default:
-        return { bg: "bg-gray-500/10", border: "border-gray-500/50", text: "text-gray-500", icon: Info };
+        return { bg: "bg-elevated", border: "border-line", text: "text-ink-faint", icon: Info };
     }
   };
 
   return (
-    <div className="bg-[#111827] border border-[#1f2937] rounded-xl flex flex-col h-full shadow-xl">
-      <div className="px-6 py-4 border-b border-[#1f2937] flex justify-between items-center bg-[#0f172a]">
-        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+    <div className="flex h-full flex-col rounded-lg border border-line bg-panel">
+      <div className="flex items-center justify-between border-b border-line px-5 py-4">
+        <h3 className="flex items-center gap-2 font-display text-sm font-semibold tracking-wide text-ink">
           Critical Events
-          <span className="bg-rose-500 text-white text-[10px] px-2 py-0.5 rounded-full animate-pulse">
-            LIVE
-          </span>
+          {alerts.length > 0 && (
+            <span className="rounded-full bg-critical/15 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-critical">
+              {alerts.length} LIVE
+            </span>
+          )}
         </h3>
-        <span className="text-gray-500 text-xs font-mono">{alerts.length} active alerts</span>
+        <span className="font-mono text-xs text-ink-faint">{alerts.length} active</span>
       </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-[400px]">
+      <div className="max-h-[400px] flex-1 space-y-2.5 overflow-y-auto p-4">
         {alerts.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-gray-500 py-12">
-            <div className="w-12 h-12 rounded-full border border-emerald-500/30 flex items-center justify-center mb-3">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
+          <div className="flex h-full flex-col items-center justify-center py-12">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-ok/30">
+              <div className="h-2 w-2 animate-pulse rounded-full bg-ok" />
             </div>
-            <p className="font-medium">No active alerts</p>
-            <p className="text-xs">System status optimal</p>
+            <p className="text-sm font-medium text-ink">No active alerts</p>
+            <p className="text-xs text-ink-faint">System status optimal</p>
           </div>
         ) : (
           alerts.map((alert, idx) => {
             const styles = getAlertStyles(alert.level);
             const Icon = styles.icon;
             return (
-              <div 
-                key={`${alert.location}-${idx}`} 
-                className={`${styles.bg} border ${styles.border} rounded-lg p-4 flex gap-4 animate-in fade-in slide-in-from-right-4 duration-300`}
-              >
-                <div className={`mt-1 ${styles.text}`}>
-                  <Icon className="w-5 h-5" />
+              <div key={`${alert.location}-${idx}`} className={`flex gap-3 rounded-lg border ${styles.border} ${styles.bg} p-4`}>
+                <div className={`mt-0.5 ${styles.text}`}>
+                  <Icon className="h-5 w-5" />
                 </div>
                 <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <span className={`text-xs font-black uppercase tracking-widest ${styles.text}`}>
-                      {alert.level} RISK
-                    </span>
-                    <span className="text-[10px] font-mono text-gray-500">
-                      {format(new Date(alert.timestamp), "HH:mm:ss")}
-                    </span>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className={`text-[11px] font-semibold uppercase tracking-wide ${styles.text}`}>{alert.level} risk</span>
+                    <span className="font-mono text-[11px] text-ink-faint">{format(new Date(alert.timestamp), "HH:mm:ss")}</span>
                   </div>
-                  <p className="text-white font-semibold text-sm mt-1">{alert.location}</p>
-                  <p className="text-gray-400 text-xs mt-1 leading-relaxed">{alert.message}</p>
+                  <p className="mt-1 text-sm font-semibold text-ink">{alert.location}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-ink-muted">{alert.message}</p>
                 </div>
               </div>
             );
