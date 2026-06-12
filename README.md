@@ -1,160 +1,160 @@
-# 🛰️ Earth Observation Data Pipeline System
+# 🛰️ Earth Observation Platform
 
-A full-stack satellite-based environmental monitoring platform that ingests real-time atmospheric data, processes it through a 5-stage ETL pipeline, and displays insights on a mission control–style dashboard.
+A full-stack environmental monitoring system that ingests live atmospheric data through a five-stage ETL pipeline, computes NWS-standard heat-index and risk scores, and surfaces real-time alerts on a telemetry-style command dashboard.
 
-> **Live Data Source:** [Open-Meteo API](https://open-meteo.com/) (free, no auth required)
+**🔴 Live demo:** https://mapatingin.vercel.app
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green?logo=mongodb)
 ![Tailwind](https://img.shields.io/badge/TailwindCSS-4-38bdf8?logo=tailwindcss)
+![CI](https://github.com/YOUR_USERNAME/YOUR_REPO/actions/workflows/ci.yml/badge.svg)
+
+![Dashboard](docs/screenshots/dashboard.png)
 
 ---
 
 ## ✨ Features
 
-- **Real-Time Data Ingestion** — Fetches live temperature, humidity, and cloud cover data from the Open-Meteo API for multiple Philippine cities
-- **5-Stage ETL Pipeline** — Visual pipeline with stages: API Fetch → Data Cleaning → Feature Engineering → Alert Engine → Storage
-- **Risk Scoring Engine** — Computes Heat Index and Risk Scores with automatic alert generation (HIGH / MEDIUM / LOW)
-- **Interactive Satellite Map** — Leaflet-powered dark map with color-coded risk markers; **double-click anywhere** to run an ad-hoc environmental scan
-- **Reverse Geocoding** — Double-clicked locations are automatically named via OpenStreetMap Nominatim
-- **Trend Charts** — Recharts-powered area charts tracking temperature and heat index over time
-- **Auto-Refresh** — Configurable 30-second polling interval for continuous monitoring
-- **MongoDB Persistence** — Raw data, processed results, and pipeline logs stored in MongoDB Atlas
+- **Real-time ingestion** — live temperature, humidity, and cloud-cover data from the [Open-Meteo API](https://open-meteo.com/) for multiple Philippine cities
+- **5-stage ETL pipeline** — API Fetch → Data Cleaning → Feature Engineering → Risk Evaluation → Storage, visualized live as data flows through
+- **NWS-standard heat index** — computed with the National Weather Service [Rothfusz regression](https://www.wpc.ncep.noaa.gov/html/heatindex_equation.shtml), not an approximation
+- **Normalized risk scoring** — a true 0–100 composite that maps heat index onto NWS heat-stress bands, weighted with humidity and cloud cover
+- **Tiered alert engine** — MEDIUM/HIGH heat alerts graded against real heat-stress thresholds, plus storm-indicator and humidity alerts
+- **Ad-hoc analysis** — double-click anywhere on the interactive map to run an on-demand environmental scan, reverse-geocoded via OpenStreetMap Nominatim
+- **Real trend tracking** — metric deltas and 24-hour trend charts computed from stored history, not placeholders
+- **Full observability** — raw payloads, processed results, and per-stage pipeline logs persisted to MongoDB Atlas
+
+## 🏗️ Architecture
+
+```mermaid
+flowchart LR
+    A[Open-Meteo API] -->|hourly readings| B["/api/fetch-all<br/>/api/fetch-data"]
+    B --> C{5-Stage ETL Pipeline}
+    C -->|Stage 1-2| D[Fetch + Clean]
+    C -->|Stage 3| E[Heat Index NWS +<br/>Risk Score 0-100]
+    C -->|Stage 4| F[Alert Engine]
+    C -->|Stage 5| G[(MongoDB Atlas)]
+    G --> H["/api/data"]
+    H --> I[Mission Control Dashboard]
+    J[Map double-click] -->|reverse geocode| B
+```
+
+**Collections:** `RawData` (original API payloads) · `ProcessedData` (computed metrics, compound-indexed on `location + timestamp`) · `PipelineLog` (per-run stage, status, duration)
+
+## 🧮 Methodology
+
+- **Heat Index:** NWS Rothfusz regression — the simple Steadman formula at lower temperatures, the full nine-term regression (with low-humidity and high-humidity adjustments) when conditions warrant, per the official NWS algorithm.
+- **Risk Score:** heat index normalized onto the NWS heat-stress range (27°C = no stress → 54°C = extreme danger), then combined as `0.6·heat + 0.25·humidity + 0.15·cloud`, clamped to 0–100.
+- **Alert thresholds:** heat alerts at ≥ 32°C (MEDIUM, "extreme caution" band) and ≥ 41°C (HIGH, "danger" band) heat index.
 
 ## 🛠️ Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Next.js 16 (App Router), React, Tailwind CSS v4 |
-| Charts | Recharts (Area charts) |
-| Map | Leaflet (raw API, SSR-safe) |
-| Backend | Next.js API Routes |
+| Frontend | Next.js 16 (App Router), React 19, Tailwind CSS v4 |
+| Charts | Recharts |
+| Map | Leaflet (raw API, SSR-safe dynamic import) |
+| Backend | Next.js API Routes (serverless) |
 | Database | MongoDB Atlas (Mongoose) |
-| Icons | Lucide React |
+| Testing | Vitest |
+| CI | GitHub Actions (lint + test + build) |
 | Deployment | Vercel |
+
+## 🎨 Design
+
+Telemetry-grade command-center design system:
+
+- **Fonts:** Space Grotesk (display) · IBM Plex Sans (body) · IBM Plex Mono (data)
+- **Surfaces:** three-layer dark system (`#0b0f1a` base / `#121826` panel / `#1a2333` elevated)
+- **Color as meaning:** cyan reserved for live data, safety orange for primary actions, semantic green/amber/rose for risk states
+- WCAG-conscious contrast, `prefers-reduced-motion` respected
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+
+- Node.js **20.19+**
 - MongoDB Atlas account ([free tier](https://www.mongodb.com/cloud/atlas))
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/YOUR_USERNAME/earth-observation-pipeline.git
-cd earth-observation-pipeline
-```
+### Setup
 
-### 2. Install dependencies
 ```bash
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
+cd YOUR_REPO
 npm install
 ```
 
-### 3. Configure environment variables
-Create a `.env.local` file in the root:
+Create `.env.local` in the root:
+
 ```env
 MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/earth-obs?retryWrites=true&w=majority
 ```
 
-> **MongoDB Atlas Setup:**
-> 1. Create a free cluster at [mongodb.com/atlas](https://www.mongodb.com/cloud/atlas)
-> 2. Create a database user with read/write permissions
-> 3. Whitelist your IP (or `0.0.0.0/0` for development)
-> 4. Copy the connection string and replace `<username>` and `<password>`
+> **Atlas setup:** create a free cluster → add a database user with read/write → Network Access: allow `0.0.0.0/0` (required for Vercel's rotating serverless IPs) → copy the connection string. URL-encode any special characters in the password.
 
-### 4. Run the development server
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — the system will automatically trigger an initial pipeline run if no data exists.
+Open [http://localhost:3000](http://localhost:3000) — an initial pipeline run triggers automatically if the database is empty.
 
-## 📡 API Endpoints
+### Tests
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| `POST` | `/api/fetch-data` | Run pipeline for a single location `{ lat, lon, name }` |
-| `POST` | `/api/fetch-all` | Run pipeline for all 3 hardcoded locations in parallel |
-| `GET` | `/api/data` | Get latest record per location (summary) |
-| `GET` | `/api/data?location=Quezon City` | Get last 24 records for a specific location |
-
-## 🧠 Pipeline Architecture
-
-```
-[API Fetch] → [Data Cleaning] → [Feature Engineering] → [Alert Engine] → [Storage]
+```bash
+npm test
 ```
 
-1. **API Fetch** — Calls Open-Meteo for hourly forecast data
-2. **Data Cleaning** — Replaces nulls, rounds floats, validates types
-3. **Feature Engineering** — Computes Heat Index (`temp + 0.33 * humidity - 4`) and Risk Score
-4. **Alert Engine** — Evaluates thresholds for heat, humidity, and cloud cover
-5. **Storage** — Persists raw data, processed results, and pipeline logs to MongoDB
-
-## 🌍 Monitored Locations
-
-| City | Latitude | Longitude |
-|------|----------|-----------|
-| Quezon City | 14.65 | 121.07 |
-| Cebu City | 10.32 | 123.89 |
-| Davao City | 7.19 | 125.45 |
-
-> **Pro Tip:** Double-click anywhere on the map to run an ad-hoc environmental scan for any location on Earth!
-
-## 🎨 Design
-
-Dark mission control aesthetic with:
-- Background: `#0a0e1a` (deep navy)
-- Accent: `#06b6d4` (cyan)
-- Cards: `#111827` with glowing borders
-- Font: Inter + Space Mono (Google Fonts)
-- Animated pipeline visualization with pulse effects
+Unit tests cover the heat-index regression (validated against NWS reference values), risk-score normalization and clamping, and alert threshold boundaries.
 
 ## 📦 Deployment (Vercel)
 
-1. Push to GitHub
-2. Import the repo in [Vercel](https://vercel.com)
-3. Add the `MONGODB_URI` environment variable in Vercel project settings
-4. Deploy — done!
+1. Push to GitHub and import the repo in [Vercel](https://vercel.com)
+2. Add `MONGODB_URI` as a Production environment variable
+3. Deploy (redeploy after any env variable change — they don't apply retroactively)
 
 ## 📁 Project Structure
 
 ```
 ├── app/
 │   ├── page.tsx                    # Mission Control dashboard
-│   ├── layout.tsx                  # Root layout with fonts
-│   ├── globals.css                 # Global styles + Leaflet overrides
+│   ├── layout.tsx                  # Root layout + font setup
+│   ├── globals.css                 # Design tokens (Tailwind v4 @theme) + Leaflet overrides
 │   └── api/
-│       ├── fetch-data/route.ts     # Single location pipeline
-│       ├── fetch-all/route.ts      # All locations pipeline
+│       ├── fetch-data/route.ts     # Single-location pipeline trigger
+│       ├── fetch-all/route.ts      # All-locations pipeline trigger
 │       └── data/route.ts           # Data retrieval endpoint
 ├── components/
-│   ├── MetricCard.tsx              # Stat display cards
+│   ├── MetricCard.tsx              # KPI cards with real trend deltas
 │   ├── LocationOverview.tsx        # Location summary table
 │   ├── AlertPanel.tsx              # Live alert feed
 │   ├── PipelineVisualizer.tsx      # ETL stage visualization
-│   ├── TemperatureChart.tsx        # Recharts trend analysis
+│   ├── TemperatureChart.tsx        # 24h trend chart with empty state
 │   ├── LocationMap.tsx             # Map wrapper (SSR-safe)
-│   ├── MapInner.tsx                # Raw Leaflet map implementation
+│   ├── MapInner.tsx                # Raw Leaflet implementation
 │   ├── GlobalAlertBanner.tsx       # Critical alert banner
 │   └── AdHocAnalysisPanel.tsx      # Double-click scan results
 ├── lib/
+│   ├── calculations.ts             # Pure math: NWS heat index, risk score
+│   ├── alertEngine.ts              # Threshold-based alert evaluation
+│   ├── pipeline.ts                 # Full ETL orchestration
 │   ├── mongodb.ts                  # Mongoose connection singleton
-│   ├── locations.ts                # Hardcoded location config
-│   ├── pipeline.ts                 # Full ETL pipeline logic
-│   └── alertEngine.ts              # Alert evaluation logic
-├── models/
-│   ├── RawData.ts                  # Raw API response schema
-│   ├── ProcessedData.ts            # Processed metrics schema
-│   └── PipelineLog.ts             # Pipeline execution log schema
-├── .env.example                    # Environment variable template
+│   ├── locations.ts                # Monitored location config
+│   └── __tests__/                  # Vitest unit tests
+├── models/                         # Mongoose schemas (RawData, ProcessedData, PipelineLog)
+├── .github/workflows/ci.yml        # Lint + test + build on every push
+├── .env.example
 └── README.md
 ```
+
+## ⚠️ Limitations & Production Considerations
+
+This is a portfolio/demonstration project. For production use it would need:
+
+- **API protection** — the pipeline-trigger endpoints are currently unauthenticated; a shared secret, auth layer, or rate limiting would prevent unbounded writes
+- **Scheduled ingestion** — data collection runs from connected clients (30s polling); a cron job or queue would decouple ingestion from traffic
+- **Data retention** — a TTL index on `RawData` to cap storage growth on the free tier
+- **Historical backfill** — trends currently build forward from first deployment rather than from historical archives
 
 ## 📄 License
 
 MIT
-
----
-
-*Designed for Global Environmental Surveillance*
